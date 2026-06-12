@@ -1,5 +1,6 @@
 from sqlalchemy import Integer
 from sqlalchemy import ForeignKey
+from sqlalchemy import String
 
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -18,4 +19,8 @@ class Conversation(Base):
 
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id")
+    )
+
+    title: Mapped[str] = mapped_column(
+        String(255)
     )
