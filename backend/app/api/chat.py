@@ -3,6 +3,10 @@ from sqlalchemy.orm import Session
 from app.database.deps import get_db
 from app.services.chat.chat_history_service import ChatHistoryService
 
+from app.services.chat.conversation_service import (
+    ConversationService
+)
+
 from app.schemas.chat import (
     ChatRequest,
     ChatResponse
@@ -24,15 +28,32 @@ def chat(request: ChatRequest,
     # Lưu tin nhắn người dùng
     ChatHistoryService.save_message(
         db=db,
-        conversation_id=1,
+        conversation_id=request.conversation_id,
         role="user",
         content=request.message
     )
 
+    conversation = (
+        ConversationService.get_by_id(
+            db = db,
+            conversation_id = request.conversation_id
+        )
+    )
+
+    if(
+        conversation 
+        and  conversation.title == "New Chat"
+    ):
+        ConversationService.update_title(
+            db = db,
+            conversation_id = conversation.id,
+            title = request.message[:50]
+        )
+
     # TEST: đọc lịch sử từ DB
     messages = ChatHistoryService.get_messages(
         db=db,
-        conversation_id=1
+        conversation_id=request.conversation_id
     )
 
     # TEST: build history
@@ -51,7 +72,7 @@ def chat(request: ChatRequest,
     # Lưu phản hồi AI
     ChatHistoryService.save_message(
         db=db,
-        conversation_id=1,
+        conversation_id=request.conversation_id,
         role="assistant",
         content=answer
     )

@@ -1,8 +1,9 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class ConversationCreateRequest(BaseModel):
-    title: str
+    title: Optional[str] = None
 
 
 class ConversationResponse(BaseModel):
