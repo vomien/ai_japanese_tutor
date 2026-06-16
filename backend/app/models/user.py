@@ -19,3 +19,12 @@ class User(Base):
         String(100),
         unique=True
     )
+
+    email: Mapped[str] = mapped_column(
+        String(255),
+        unique = True
+    )
+
+    password_hash: Mapped[str] = mapped_column(
+        String(255)
+    )

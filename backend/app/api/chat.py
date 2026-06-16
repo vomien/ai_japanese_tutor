@@ -1,3 +1,4 @@
+from app.models import user
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database.deps import get_db
@@ -14,6 +15,14 @@ from app.schemas.chat import (
 
 from app.services.llm.gemini_service import (
     GeminiService
+)
+
+from app.services.user.user_profile_service import (
+    UserProfileService
+)
+
+from app.services.user.learning_profile_service import(
+    LearningProfileService
 )
 
 router = APIRouter()
@@ -59,15 +68,77 @@ def chat(request: ChatRequest,
     # TEST: build history
     history = build_history(messages)
 
-    print("\n===== HISTORY =====")
-    print(history)
-    print("===================\n")
+    # print("\n===== HISTORY =====")
+    # print(history)
+    # print("===================\n")
+
+    # TEST USER PROFILE
+    profile = UserProfileService.get_profile(
+        db=db,
+        user_id=1
+    )
+
+    learning_profile = (
+        LearningProfileService.get_profile(
+            db=db,
+            user_id=1
+        )
+    )
+
+    profile_context = f"""
+Thông tin người học:
+
+Trình độ hiện tại: {profile.current_level}
+Mục tiêu: {profile.target_level}
+Ngôn ngữ mẹ đẻ: {profile.native_language}
+
+Đánh giá học tập:
+
+Trình độ ước lượng: {learning_profile.estimated_level}
+
+Điểm mạnh:
+{learning_profile.strengths}
+
+Điểm yếu:
+{learning_profile.weaknesses}
+"""
+
+    # print("\n===== PROFILE =====")
+    # print(profile.current_level)
+    # print(profile.target_level)
+    # print(profile.native_language)
+    # print("===================\n")
+
+
+    # print("\n===== LEARNING PROFILE =====")
+
+    # print(learning_profile.estimated_level)
+    # print(learning_profile.strengths)
+    # print(learning_profile.weaknesses)
+
+    # print("============================\n")
+
+    LearningProfileService.update_weakness(
+        db=db,
+        user_id=1,
+        weakness="Kanji"
+    )
 
     # Gọi Gemini
-    answer = gemini.chat(
+    result = gemini.chat(
+        profile_context= profile_context,
         history=history,
         user_message = request.message
     )
+    answer = result["reply"]
+    weakness = result["weakness"]
+
+    if weakness:
+        LearningProfileService.update_weakness(
+            db,
+            user_id = 1,
+            weakness=weakness
+        )
 
     # Lưu phản hồi AI
     ChatHistoryService.save_message(
